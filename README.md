@@ -52,3 +52,47 @@ Open: http://127.0.0.1:8010
 - Visualizer currently supports Python code execution.
 - It uses lightweight AST restrictions for safer local usage and blocks imports/file I/O/eval-like calls.
 - Designed for local learning, not untrusted multi-user hosting.
+
+## Auto-Start on Startup + Kill Switch
+
+### One-time setup (auto-start on login/startup)
+
+```bash
+bash scripts/install_autostart.sh
+```
+
+This enables two user services:
+- `dsa-complexity-web.service` (http://127.0.0.1:8000)
+- `dsa-visualizer-web.service` (http://127.0.0.1:8010)
+
+### Kill switch (stop both immediately)
+
+```bash
+bash scripts/kill_switch.sh
+```
+
+### Manual controls
+
+Start both:
+
+```bash
+bash scripts/start_servers.sh
+```
+
+Stop both:
+
+```bash
+bash scripts/stop_servers.sh
+```
+
+Status:
+
+```bash
+bash scripts/status_servers.sh
+```
+
+### Disable autostart
+
+```bash
+bash scripts/disable_autostart.sh
+```
