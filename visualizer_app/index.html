@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Code Execution Visualizer</title>
+  <style>
+    :root {
+      --bg: #f0f7ff;
+      --card: #ffffff;
+      --ink: #12263a;
+      --muted: #4f6477;
+      --accent: #0b6e99;
+      --accent-2: #e3f3fb;
+      --border: #cbddeb;
+      --danger: #a81d1d;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: linear-gradient(160deg, #eef8ff 0%, #f8fcff 45%, #e8f2ff 100%);
+      font-family: "Source Sans 3", "Segoe UI", sans-serif;
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 22px;
+    }
+
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 8px 20px rgba(8, 58, 92, 0.08);
+      padding: 16px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 1.55rem;
+    }
+
+    .sub {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .inputs {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 12px;
+    }
+
+    textarea,
+    input {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      font-family: "JetBrains Mono", "Consolas", monospace;
+      background: #fbfdff;
+      color: #0d2233;
+    }
+
+    textarea {
+      min-height: 320px;
+      resize: vertical;
+      line-height: 1.45;
+      font-size: 0.92rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .side {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .btns {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      background: var(--accent);
+      color: white;
+      cursor: pointer;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    button.secondary {
+      background: #d5e8f5;
+      color: #123;
+    }
+
+    .error {
+      color: var(--danger);
+      white-space: pre-wrap;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.88rem;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(120px, 1fr));
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .pill {
+      border-radius: 10px;
+      background: var(--accent-2);
+      border: 1px solid #c9e6f4;
+      padding: 8px;
+      font-size: 0.9rem;
+    }
+
+    .stdout {
+      white-space: pre-wrap;
+      border: 1px solid var(--border);
+      background: #f8fcff;
+      border-radius: 10px;
+      padding: 10px;
+      font-family: "JetBrains Mono", monospace;
+      min-height: 40px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      table-layout: fixed;
+    }
+
+    th, td {
+      border-bottom: 1px solid #e3edf4;
+      text-align: left;
+      padding: 8px;
+      vertical-align: top;
+      word-wrap: break-word;
+    }
+
+    th {
+      background: #f4faff;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .trace-wrap {
+      max-height: 420px;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .mono { font-family: "JetBrains Mono", monospace; }
+
+    @media (max-width: 900px) {
+      .inputs { grid-template-columns: 1fr; }
+      .summary { grid-template-columns: 1fr; }
+      textarea { min-height: 240px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="card">
+      <h1>Python Code Execution Visualizer</h1>
+      <p class="sub">Paste your DSA function/script (including LeetCode-style <code>class Solution</code> snippets) to inspect loop iterations, changing variables, line-by-line flow, return value, and stdout.</p>
+    </section>
+
+    <section class="card">
+      <div class="inputs">
+        <div>
+          <label for="code">Code</label>
+          <textarea id="code" placeholder="Paste Python code here..."></textarea>
+        </div>
+        <div class="side">
+          <div>
+            <label for="functionName">Function Name (optional if only one function exists)</label>
+            <input id="functionName" placeholder="e.g. two_sum" />
+          </div>
+          <div>
+            <label for="args">Function Args as JSON array</label>
+            <input id="args" placeholder='e.g. [[2,7,11,15], 9]' />
+          </div>
+          <div class="btns">
+            <button id="runBtn">Visualize</button>
+            <button id="sampleBtn" class="secondary">Load Sample</button>
+            <button id="clearBtn" class="secondary">Clear</button>
+          </div>
+          <p class="sub">Note: this runs Python code locally on your machine. Indented method snippets and <code>self</code> are auto-handled.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" id="errorCard" hidden>
+      <h3 style="margin-top: 0;">Error</h3>
+      <div class="error" id="errorBox"></div>
+    </section>
+
+    <section class="card" id="resultCard" hidden>
+      <h3 style="margin-top: 0;">Execution Summary</h3>
+      <div class="summary">
+        <div class="pill" id="stepsPill"></div>
+        <div class="pill" id="loopsPill"></div>
+        <div class="pill" id="returnPill"></div>
+      </div>
+
+      <h4>Stdout</h4>
+      <div class="stdout mono" id="stdoutBox"></div>
+
+      <h4>Trace Timeline</h4>
+      <div class="trace-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 64px;">#</th>
+              <th style="width: 80px;">Line</th>
+              <th style="width: 110px;">Event</th>
+              <th>Source</th>
+              <th>Loop Iter</th>
+              <th>Changed Vars</th>
+            </tr>
+          </thead>
+          <tbody id="traceBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const codeEl = document.getElementById("code");
+    const functionNameEl = document.getElementById("functionName");
+    const argsEl = document.getElementById("args");
+
+    const runBtn = document.getElementById("runBtn");
+    const sampleBtn = document.getElementById("sampleBtn");
+    const clearBtn = document.getElementById("clearBtn");
+
+    const errorCard = document.getElementById("errorCard");
+    const errorBox = document.getElementById("errorBox");
+
+    const resultCard = document.getElementById("resultCard");
+    const stepsPill = document.getElementById("stepsPill");
+    const loopsPill = document.getElementById("loopsPill");
+    const returnPill = document.getElementById("returnPill");
+    const stdoutBox = document.getElementById("stdoutBox");
+    const traceBody = document.getElementById("traceBody");
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function setError(message) {
+      errorCard.hidden = false;
+      errorBox.textContent = message;
+    }
+
+    function clearError() {
+      errorCard.hidden = true;
+      errorBox.textContent = "";
+    }
+
+    function clearResults() {
+      resultCard.hidden = true;
+      traceBody.innerHTML = "";
+      stdoutBox.textContent = "";
+    }
+
+    function renderResult(result) {
+      const { summary, return_value, stdout, steps } = result;
+      stepsPill.textContent = `Total Steps: ${summary.total_steps}`;
+      loopsPill.textContent = `Loop Lines: ${summary.loop_lines.length ? summary.loop_lines.join(", ") : "None"}`;
+      returnPill.textContent = `Return: ${return_value}`;
+      stdoutBox.textContent = stdout || "<no output>";
+
+      traceBody.innerHTML = "";
+      for (const step of steps) {
+        const changed = Object.entries(step.changed || {})
+          .map(([k, v]) => `${k} = ${v}`)
+          .join("\n");
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="mono">${step.idx}</td>
+          <td class="mono">${step.line}</td>
+          <td>${escapeHtml(step.event)}</td>
+          <td class="mono">${escapeHtml(step.source || "")}</td>
+          <td class="mono">${step.loop_iteration || "-"}</td>
+          <td class="mono">${escapeHtml(changed || "-")}</td>
+        `;
+        traceBody.appendChild(tr);
+      }
+
+      resultCard.hidden = false;
+    }
+
+    async function runVisualization() {
+      clearError();
+      clearResults();
+
+      const payload = {
+        code: codeEl.value,
+        function_name: functionNameEl.value.trim(),
+        args: argsEl.value.trim(),
+      };
+
+      try {
+        const response = await fetch("/api/visualize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+        if (!data.ok) {
+          const msg = `${data.error?.type || "Error"}: ${data.error?.message || "Unknown failure"}\n\n${data.error?.traceback || ""}`;
+          setError(msg);
+          return;
+        }
+
+        renderResult(data.result);
+      } catch (err) {
+        setError(`Network or server error: ${err.message}`);
+      }
+    }
+
+    runBtn.addEventListener("click", runVisualization);
+
+    sampleBtn.addEventListener("click", () => {
+      functionNameEl.value = "two_sum";
+      argsEl.value = "[[2,7,11,15], 9]";
+      codeEl.value = `def two_sum(nums, target):\n    seen = {}\n    for i in range(len(nums)):\n        need = target - nums[i]\n        if need in seen:\n            return [seen[need], i]\n        seen[nums[i]] = i\n    return []`;
+    });
+
+    clearBtn.addEventListener("click", () => {
+      codeEl.value = "";
+      functionNameEl.value = "";
+      argsEl.value = "";
+      clearError();
+      clearResults();
+    });
+  </script>
+</body>
+</html>

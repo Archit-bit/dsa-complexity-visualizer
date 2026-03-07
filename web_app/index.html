@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DSA Complexity Explainer</title>
+  <style>
+    :root {
+      --bg: #f5f1e8;
+      --panel: #fffefb;
+      --ink: #1f1f1f;
+      --muted: #595548;
+      --accent: #0d7a5f;
+      --accent-2: #e5f6f1;
+      --border: #d8d1c4;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      background: radial-gradient(circle at 20% 10%, #fff8ea 0, var(--bg) 45%), var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.5rem;
+      letter-spacing: 0.2px;
+    }
+
+    p {
+      margin-top: 0;
+      color: var(--muted);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 300px;
+      resize: vertical;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      font-family: "JetBrains Mono", "Fira Code", monospace;
+      font-size: 0.95rem;
+      line-height: 1.45;
+      background: #fffdfa;
+      color: #151515;
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 16px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: #ded8cb;
+      color: #222;
+    }
+
+    .results {
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid #cdebe1;
+      background: var(--accent-2);
+    }
+
+    .results h2 {
+      margin: 0 0 8px;
+      font-size: 1.1rem;
+    }
+
+    .metric {
+      margin: 4px 0;
+      font-weight: 600;
+    }
+
+    ol {
+      margin: 8px 0 0;
+      padding-left: 20px;
+    }
+
+    li { margin: 6px 0; }
+
+    @media (max-width: 640px) {
+      body { padding: 14px; }
+      .wrap { padding: 14px; }
+      textarea { min-height: 220px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>DSA Complexity Explainer</h1>
+    <p>Paste your solution. This estimates time/space complexity and explains how it inferred each part.</p>
+
+    <textarea id="code" placeholder="Paste your code here..."></textarea>
+
+    <div class="row">
+      <button id="analyzeBtn">Analyze</button>
+      <button id="sampleBtn" class="secondary">Load Sample</button>
+      <button id="clearBtn" class="secondary">Clear</button>
+    </div>
+
+    <section class="results" id="results" hidden>
+      <h2>Result</h2>
+      <div class="metric" id="time"></div>
+      <div class="metric" id="space"></div>
+      <h2 style="margin-top: 14px;">How it was calculated</h2>
+      <ol id="explanations"></ol>
+    </section>
+  </main>
+
+  <script>
+    const SORT_TOKENS = ["sort(", "sorted(", "collections.sort", "arrays.sort", "std::sort", ".sort("];
+    const LOG_TOKENS = ["/= 2", "*= 2", "<<= 1", ">>= 1", "mid =", "binary_search", "bisect"];
+
+    function normalize(code) {
+      return code
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/#.*$/gm, "")
+        .replace(/\/\/.*$/gm, "");
+    }
+
+    function maxLoopNesting(code) {
+      const lines = code.split("\n").filter((ln) => ln.trim().length > 0);
+      const stack = [];
+      let best = 0;
+
+      for (const ln of lines) {
+        const stripped = ln.trim();
+        const indent = ln.length - ln.trimStart().length;
+
+        while (
+          stack.length &&
+          indent <= stack[stack.length - 1] &&
+          !/^(elif|else|except|finally)\b/.test(stripped)
+        ) {
+          stack.pop();
+        }
+
+        if (/\b(for|while)\b/.test(stripped)) {
+          stack.push(indent);
+          best = Math.max(best, stack.length);
+        }
+
+        if (stripped.includes("}") && stack.length) {
+          stack.pop();
+        }
+      }
+
+      if (!/\b(for|while)\b/.test(code)) return 0;
+      return Math.max(best, 1);
+    }
+
+    function detectRecursion(code) {
+      const defNames = [...code.matchAll(/\bdef\s+(\w+)\s*\(/g)].map((m) => m[1]);
+      const cLikeNames = [...code.matchAll(/\b(?:int|long|void|bool|float|double|string|char|auto)\s+(\w+)\s*\(/gi)].map((m) => m[1]);
+      const names = [...new Set([...defNames, ...cLikeNames])];
+
+      for (const name of names) {
+        const calls = (code.match(new RegExp(`\\b${name}\\s*\\(`, "g")) || []).length;
+        if (calls >= 2) {
+          return { recursive: true, branching: calls - 1 >= 2 };
+        }
+      }
+
+      if (/return\s+/.test(code) && /\b\w+\(.*\)\s*\+\s*\w+\(/.test(code)) {
+        return { recursive: true, branching: true };
+      }
+
+      return { recursive: false, branching: false };
+    }
+
+    function hasAuxStructure(code) {
+      const patterns = [
+        /\[[^\]]*\]\s*\*\s*n/i,
+        /new\s+\w+\s*\[/i,
+        /vector</i,
+        /arraylist</i,
+        /dict\(/i,
+        /\{\}/,
+        /unordered_map/i,
+        /unordered_set/i,
+        /stack</i,
+        /queue</i,
+      ];
+      return patterns.some((p) => p.test(code));
+    }
+
+    function hasSlicingOrCopy(code) {
+      return /\[[^\]]*:[^\]]*\]/.test(code) || /\.copy\s*\(/.test(code) || /\bcopy\s*\(/.test(code);
+    }
+
+    function combineTerms(terms) {
+      const unique = [...new Set(terms)];
+      if (unique.length === 1) return unique[0];
+
+      const rank = {
+        "O(1)": 0,
+        "O(log n)": 1,
+        "O(n)": 2,
+        "O(n log n)": 3,
+        "O(n^2)": 4,
+        "O(n^3)": 5,
+        "O(2^n) (or worse depending on branching)": 6,
+        "Potential O(n^2)": 4,
+      };
+
+      function score(term) {
+        if (term in rank) return rank[term];
+        const m = term.match(/^O\(n\^(\d+)\)$/);
+        if (m) return Number(m[1]) + 2;
+        return 2;
+      }
+
+      let dominant = unique[0];
+      for (const t of unique) {
+        if (score(t) > score(dominant)) dominant = t;
+      }
+
+      return `Candidates: ${unique.join(", ")} | Estimated dominant: ${dominant}`;
+    }
+
+    function analyze(code) {
+      const clean = normalize(code);
+      const lower = clean.toLowerCase();
+      const timeTerms = [];
+      const spaceTerms = [];
+      const explanations = [];
+
+      function addTime(term, reason) {
+        timeTerms.push(term);
+        explanations.push(`Time: ${reason} -> ${term}`);
+      }
+
+      function addSpace(term, reason) {
+        spaceTerms.push(term);
+        explanations.push(`Space: ${reason} -> ${term}`);
+      }
+
+      if (!clean.trim()) {
+        addTime("O(1)", "No executable content detected");
+        addSpace("O(1)", "No auxiliary structures detected");
+      } else {
+        const rec = detectRecursion(clean);
+        if (rec.recursive && rec.branching) {
+          addTime("O(2^n) (or worse depending on branching)", "Function appears to call itself multiple times per frame");
+          addSpace("O(n)", "Recursive call stack grows with depth");
+        } else if (rec.recursive) {
+          addTime("O(n)", "Single recursive call chain over input size");
+          addSpace("O(n)", "Recursive call stack grows with depth");
+        }
+
+        if (SORT_TOKENS.some((t) => lower.includes(t))) {
+          addTime("O(n log n)", "Sorting operation detected");
+        }
+
+        if (LOG_TOKENS.some((t) => lower.includes(t))) {
+          addTime("O(log n)", "Loop/index appears to grow or shrink geometrically");
+        }
+
+        const nesting = maxLoopNesting(clean);
+        if (nesting === 1) {
+          addTime("O(n)", "One loop over data detected");
+        } else if (nesting >= 2) {
+          addTime(`O(n^${nesting})`, `Detected approximately ${nesting} levels of nested loops`);
+        }
+
+        const membership = clean.match(/\bif\s+.+\s+in\s+([A-Za-z_]\w*)/);
+        if (membership && membership[1] !== "range" && !lower.includes("set(") && !lower.includes("unordered_set")) {
+          addTime("Potential O(n^2)", "Linear membership checks (`in` on list/array) may be inside iteration");
+        }
+
+        if (hasAuxStructure(clean)) {
+          addSpace("O(n)", "Auxiliary collection/array allocation detected");
+        }
+        if (hasSlicingOrCopy(clean)) {
+          addSpace("O(n)", "Slicing/copy operation creates additional data");
+        }
+
+        if (!timeTerms.length) addTime("O(1)", "No loops/recursion/sorting patterns found");
+        if (!spaceTerms.length) addSpace("O(1)", "No obvious extra memory allocation patterns found");
+      }
+
+      return {
+        time: combineTerms(timeTerms),
+        space: combineTerms(spaceTerms),
+        explanations,
+      };
+    }
+
+    function render(result) {
+      const results = document.getElementById("results");
+      document.getElementById("time").textContent = `Estimated Time Complexity: ${result.time}`;
+      document.getElementById("space").textContent = `Estimated Space Complexity: ${result.space}`;
+
+      const list = document.getElementById("explanations");
+      list.innerHTML = "";
+      result.explanations.forEach((line) => {
+        const li = document.createElement("li");
+        li.textContent = line;
+        list.appendChild(li);
+      });
+
+      results.hidden = false;
+    }
+
+    document.getElementById("analyzeBtn").addEventListener("click", () => {
+      const code = document.getElementById("code").value;
+      render(analyze(code));
+    });
+
+    document.getElementById("sampleBtn").addEventListener("click", () => {
+      document.getElementById("code").value = `def two_sum(nums, target):\n    seen = {}\n    for i in range(len(nums)):\n        if target - nums[i] in seen:\n            return [seen[target - nums[i]], i]\n        seen[nums[i]] = i\n    return []`;
+    });
+
+    document.getElementById("clearBtn").addEventListener("click", () => {
+      document.getElementById("code").value = "";
+      document.getElementById("results").hidden = true;
+    });
+  </script>
+</body>
+</html>
