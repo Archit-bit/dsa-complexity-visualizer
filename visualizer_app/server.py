@@ -122,6 +122,35 @@ def build_loop_line_set(code: str) -> set[int]:
     return lines
 
 
+def build_branch_meta(code: str) -> list[dict[str, int | None]]:
+    tree = ast.parse(code)
+    meta: list[dict[str, int | None]] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.If):
+            body_start = node.body[0].lineno if node.body else None
+            else_start = node.orelse[0].lineno if node.orelse else None
+            meta.append(
+                {
+                    "line": node.lineno,
+                    "body_start": body_start,
+                    "else_start": else_start,
+                    "end_line": getattr(node, "end_lineno", None),
+                }
+            )
+    return sorted(meta, key=lambda x: int(x["line"] or 0))
+
+
+def user_frame_stack(frame) -> list[str]:
+    names: list[str] = []
+    cur = frame
+    while cur is not None:
+        if cur.f_code.co_filename == "<user_code>":
+            names.append(cur.f_code.co_name)
+        cur = cur.f_back
+    names.reverse()
+    return names
+
+
 def pick_callable(exec_scope: dict[str, Any], function_name: str | None) -> Any:
     if function_name:
         fn = exec_scope.get(function_name)
@@ -174,6 +203,7 @@ def run_trace(payload: dict[str, Any]) -> dict[str, Any]:
     start = time.time()
     steps: list[dict[str, Any]] = []
     loop_lines = build_loop_line_set(code)
+    branch_meta = build_branch_meta(code)
     loop_hits: dict[int, int] = {}
     event_counter = 0
     started_target = function_name is None
@@ -208,10 +238,19 @@ def run_trace(payload: dict[str, Any]) -> dict[str, Any]:
             call_args = args
 
     source_lines = code.splitlines()
-    previous_locals: dict[str, str] = {}
+    pending_step: dict[str, Any] | None = None
+    pending_before: dict[str, str] | None = None
+
+    def append_step(step: dict[str, Any]) -> None:
+        nonlocal event_counter
+        if event_counter >= MAX_STEPS:
+            raise RuntimeError(f"Step limit reached ({MAX_STEPS}). Possible infinite loop.")
+        step["idx"] = event_counter + 1
+        steps.append(step)
+        event_counter += 1
 
     def tracer(frame, event, arg):
-        nonlocal event_counter, started_target, previous_locals
+        nonlocal started_target, pending_step, pending_before
 
         if time.time() - start > TIMEOUT_SECONDS:
             raise TimeoutError(f"Execution exceeded {TIMEOUT_SECONDS}s time limit")
@@ -225,42 +264,64 @@ def run_trace(payload: dict[str, Any]) -> dict[str, Any]:
         if event not in {"line", "return"}:
             return tracer
 
-        if event_counter >= MAX_STEPS:
-            raise RuntimeError(f"Step limit reached ({MAX_STEPS}). Possible infinite loop.")
-
-        lineno = frame.f_lineno
-        source = source_lines[lineno - 1].rstrip() if 1 <= lineno <= len(source_lines) else ""
-
         current_locals = serializable_locals(frame.f_locals)
-        changed = {}
-        for key, value in current_locals.items():
-            if previous_locals.get(key) != value:
-                changed[key] = value
+        frame_stack = user_frame_stack(frame)
+        current_frame_name = frame_stack[-1] if frame_stack else frame.f_code.co_name
+        current_depth = len(frame_stack)
 
-        deleted = [k for k in previous_locals.keys() if k not in current_locals]
-        previous_locals = current_locals
+        # A Python "line" event fires before executing that line.
+        # So we finalize the previously pending line using current locals,
+        # which represent the state after that previous line executed.
+        if pending_step is not None and pending_before is not None:
+            changed = {}
+            for key, value in current_locals.items():
+                if pending_before.get(key) != value:
+                    changed[key] = value
+            deleted = [k for k in pending_before.keys() if k not in current_locals]
 
-        loop_iteration = None
-        if lineno in loop_lines and event == "line":
-            loop_hits[lineno] = loop_hits.get(lineno, 0) + 1
-            loop_iteration = loop_hits[lineno]
+            pending_step["changed"] = changed
+            pending_step["deleted"] = deleted
+            pending_step["locals"] = current_locals
+            pending_step["frame"] = current_frame_name
+            pending_step["depth"] = current_depth
+            pending_step["stack"] = frame_stack
+            append_step(pending_step)
+            pending_step = None
+            pending_before = None
 
-        step = {
-            "idx": event_counter + 1,
-            "event": event,
-            "line": lineno,
-            "source": source,
-            "changed": changed,
-            "deleted": deleted,
-            "locals": current_locals,
-        }
-        if loop_iteration is not None:
-            step["loop_iteration"] = loop_iteration
-        if event == "return":
-            step["return_value"] = repr_short(arg)
+        if event == "line":
+            lineno = frame.f_lineno
+            source = source_lines[lineno - 1].rstrip() if 1 <= lineno <= len(source_lines) else ""
 
-        steps.append(step)
-        event_counter += 1
+            step = {
+                "event": "line",
+                "line": lineno,
+                "source": source,
+            }
+            if lineno in loop_lines:
+                loop_hits[lineno] = loop_hits.get(lineno, 0) + 1
+                step["loop_iteration"] = loop_hits[lineno]
+
+            pending_step = step
+            pending_before = current_locals
+        else:
+            lineno = frame.f_lineno
+            source = source_lines[lineno - 1].rstrip() if 1 <= lineno <= len(source_lines) else ""
+            append_step(
+                {
+                    "event": "return",
+                    "line": lineno,
+                    "source": source,
+                    "changed": {},
+                    "deleted": [],
+                    "locals": current_locals,
+                    "return_value": repr_short(arg),
+                    "frame": current_frame_name,
+                    "depth": current_depth,
+                    "stack": frame_stack,
+                }
+            )
+
         return tracer
 
     stdout_buffer = io.StringIO()
@@ -276,12 +337,14 @@ def run_trace(payload: dict[str, Any]) -> dict[str, Any]:
     return {
         "ok": True,
         "result": {
+            "source_lines": source_lines,
             "return_value": repr_short(result_value),
             "stdout": stdout_buffer.getvalue(),
             "steps": steps,
             "summary": {
                 "total_steps": len(steps),
                 "loop_lines": sorted(loop_lines),
+                "branch_meta": branch_meta,
             },
         },
     }

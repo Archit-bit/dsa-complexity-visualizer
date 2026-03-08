@@ -3,246 +3,244 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Code Execution Visualizer</title>
+  <title>Python DSA Visualizer Pro</title>
   <style>
     :root {
-      --bg: #f0f7ff;
+      --bg: #eef3f9;
       --card: #ffffff;
-      --ink: #12263a;
-      --muted: #4f6477;
-      --accent: #0b6e99;
-      --accent-2: #e3f3fb;
-      --border: #cbddeb;
-      --danger: #a81d1d;
+      --ink: #12283a;
+      --muted: #5a7187;
+      --accent: #0a7897;
+      --accent-2: #e7f6fb;
+      --line-hi: #fff3c7;
+      --border: #c8d9e8;
+      --danger: #a92020;
+      --ok: #1d7a4b;
     }
 
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
-      background: linear-gradient(160deg, #eef8ff 0%, #f8fcff 45%, #e8f2ff 100%);
-      font-family: "Source Sans 3", "Segoe UI", sans-serif;
+      background: radial-gradient(circle at 5% 5%, #f9fcff, var(--bg) 50%);
       color: var(--ink);
-      min-height: 100vh;
-      padding: 22px;
-    }
-
-    .container {
-      max-width: 1120px;
-      margin: 0 auto;
-      display: grid;
-      gap: 14px;
-    }
-
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      box-shadow: 0 8px 20px rgba(8, 58, 92, 0.08);
+      font-family: "Source Sans 3", "Segoe UI", sans-serif;
       padding: 16px;
     }
 
-    h1 {
-      margin: 0 0 6px;
-      font-size: 1.55rem;
-    }
+    .container { max-width: 1280px; margin: 0 auto; display: grid; gap: 12px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; box-shadow: 0 8px 18px rgba(8, 49, 79, 0.08); }
+    .row { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
 
-    .sub {
-      margin: 0;
-      color: var(--muted);
-    }
+    h1, h2, h3 { margin: 0 0 6px; }
+    h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.1rem; }
+    .sub { margin: 0; color: var(--muted); }
+    .mono { font-family: "JetBrains Mono", "Consolas", monospace; }
 
-    .inputs {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 12px;
+    textarea, input, select {
+      width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 9px;
+      font-family: "JetBrains Mono", "Consolas", monospace; background: #fbfdff;
     }
+    textarea { min-height: 210px; resize: vertical; }
 
-    textarea,
-    input {
-      width: 100%;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px;
-      font-family: "JetBrains Mono", "Consolas", monospace;
-      background: #fbfdff;
-      color: #0d2233;
-    }
-
-    textarea {
-      min-height: 320px;
-      resize: vertical;
-      line-height: 1.45;
-      font-size: 0.92rem;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: 600;
-    }
-
-    .side {
-      display: grid;
-      gap: 12px;
-      align-content: start;
-    }
-
-    .btns {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 8px;
-    }
-
+    label { display: block; margin-bottom: 5px; font-weight: 700; }
+    .btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
     button {
-      border: none;
-      border-radius: 10px;
-      padding: 10px 14px;
-      background: var(--accent);
-      color: white;
-      cursor: pointer;
-      font-weight: 700;
-      letter-spacing: 0.2px;
+      border: none; border-radius: 10px; padding: 9px 12px; cursor: pointer;
+      background: var(--accent); color: #fff; font-weight: 700;
     }
+    button.secondary { background: #d8e9f6; color: #163347; }
+    button.warn { background: #8a2d2d; }
 
-    button.secondary {
-      background: #d5e8f5;
-      color: #123;
+    .error { color: var(--danger); white-space: pre-wrap; font-size: 0.88rem; }
+    .ok { color: var(--ok); }
+
+    .pill { border: 1px solid #c9e8f2; background: var(--accent-2); border-radius: 10px; padding: 7px; font-size: 0.9rem; }
+
+    .codeview {
+      border: 1px solid var(--border); border-radius: 10px; overflow: auto; max-height: 360px; background: #f9fcff;
+      font-family: "JetBrains Mono", monospace; font-size: 0.86rem;
     }
+    .code-line { display: grid; grid-template-columns: 54px 1fr; padding: 3px 8px; border-bottom: 1px solid #edf3f8; }
+    .code-line .ln { color: #8098ad; }
+    .code-line.active { background: var(--line-hi); }
 
-    .error {
-      color: var(--danger);
-      white-space: pre-wrap;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 0.88rem;
-    }
+    .trace-wrap { max-height: 360px; overflow: auto; border: 1px solid var(--border); border-radius: 10px; }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 0.86rem; }
+    th, td { border-bottom: 1px solid #e4edf5; text-align: left; vertical-align: top; padding: 7px; word-wrap: break-word; }
+    th { position: sticky; top: 0; background: #f1f8fd; z-index: 1; }
 
-    .summary {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(120px, 1fr));
-      gap: 8px;
-      margin-bottom: 8px;
-    }
+    .bars { display: grid; gap: 6px; }
+    .bar { display: grid; grid-template-columns: 78px 1fr 48px; align-items: center; gap: 8px; }
+    .bar-track { height: 10px; background: #d8e6f1; border-radius: 999px; overflow: hidden; }
+    .bar-fill { height: 100%; background: #0a7897; }
 
-    .pill {
-      border-radius: 10px;
-      background: var(--accent-2);
-      border: 1px solid #c9e6f4;
-      padding: 8px;
-      font-size: 0.9rem;
-    }
+    .panel { border: 1px solid var(--border); border-radius: 10px; padding: 8px; background: #fbfdff; min-height: 70px; }
+    .small { font-size: 0.85rem; }
+    .stdout { white-space: pre-wrap; min-height: 44px; }
 
-    .stdout {
-      white-space: pre-wrap;
-      border: 1px solid var(--border);
-      background: #f8fcff;
-      border-radius: 10px;
-      padding: 10px;
-      font-family: "JetBrains Mono", monospace;
-      min-height: 40px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.88rem;
-      table-layout: fixed;
-    }
-
-    th, td {
-      border-bottom: 1px solid #e3edf4;
-      text-align: left;
-      padding: 8px;
-      vertical-align: top;
-      word-wrap: break-word;
-    }
-
-    th {
-      background: #f4faff;
-      position: sticky;
-      top: 0;
-      z-index: 1;
-    }
-
-    .trace-wrap {
-      max-height: 420px;
-      overflow: auto;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-    }
-
-    .mono { font-family: "JetBrains Mono", monospace; }
-
-    @media (max-width: 900px) {
-      .inputs { grid-template-columns: 1fr; }
-      .summary { grid-template-columns: 1fr; }
-      textarea { min-height: 240px; }
+    @media (max-width: 980px) {
+      .row, .grid2, .grid3 { grid-template-columns: 1fr; }
+      textarea { min-height: 180px; }
     }
   </style>
 </head>
 <body>
   <main class="container">
     <section class="card">
-      <h1>Python Code Execution Visualizer</h1>
-      <p class="sub">Paste your DSA function/script (including LeetCode-style <code>class Solution</code> snippets) to inspect loop iterations, changing variables, line-by-line flow, return value, and stdout.</p>
+      <h1>Python DSA Visualizer Pro</h1>
+      <p class="sub">Line pointer, loop heatmap, variable timeline, call stack, branch coverage, complexity hints, test runner, diff mode, and bug hints.</p>
     </section>
 
-    <section class="card">
-      <div class="inputs">
-        <div>
-          <label for="code">Code</label>
-          <textarea id="code" placeholder="Paste Python code here..."></textarea>
+    <section class="card row">
+      <div>
+        <label for="code">Primary Code</label>
+        <textarea id="code" placeholder="Paste Python solution (LeetCode style supported)"></textarea>
+      </div>
+      <div>
+        <label for="functionName">Function Name (optional)</label>
+        <input id="functionName" placeholder="e.g. twoSum" />
+
+        <label for="args" style="margin-top:8px;">Args JSON array</label>
+        <input id="args" placeholder='e.g. [[2,7,11,15], 9]' />
+
+        <div class="btns">
+          <button id="runBtn">Run Visualizer</button>
+          <button id="sampleBtn" class="secondary">Load Sample</button>
+          <button id="clearBtn" class="secondary">Clear</button>
         </div>
-        <div class="side">
-          <div>
-            <label for="functionName">Function Name (optional if only one function exists)</label>
-            <input id="functionName" placeholder="e.g. two_sum" />
-          </div>
-          <div>
-            <label for="args">Function Args as JSON array</label>
-            <input id="args" placeholder='e.g. [[2,7,11,15], 9]' />
-          </div>
-          <div class="btns">
-            <button id="runBtn">Visualize</button>
-            <button id="sampleBtn" class="secondary">Load Sample</button>
-            <button id="clearBtn" class="secondary">Clear</button>
-          </div>
-          <p class="sub">Note: this runs Python code locally on your machine. Indented method snippets and <code>self</code> are auto-handled.</p>
-        </div>
+
+        <label for="testArgs" style="margin-top:10px;">Test Runner Args (one JSON array per line)</label>
+        <textarea id="testArgs" style="min-height:120px" placeholder='[[2,7,11,15],9]\n[[3,2,4],6]'></textarea>
+        <button id="runTestsBtn" class="secondary" style="margin-top:8px;">Run Test Runner</button>
       </div>
     </section>
 
     <section class="card" id="errorCard" hidden>
-      <h3 style="margin-top: 0;">Error</h3>
-      <div class="error" id="errorBox"></div>
+      <h2>Error</h2>
+      <div class="error mono" id="errorBox"></div>
     </section>
 
     <section class="card" id="resultCard" hidden>
-      <h3 style="margin-top: 0;">Execution Summary</h3>
-      <div class="summary">
+      <div class="grid3">
         <div class="pill" id="stepsPill"></div>
         <div class="pill" id="loopsPill"></div>
         <div class="pill" id="returnPill"></div>
       </div>
 
-      <h4>Stdout</h4>
-      <div class="stdout mono" id="stdoutBox"></div>
+      <div class="btns" style="margin-top:8px;">
+        <button id="prevStepBtn" class="secondary">Prev</button>
+        <button id="playBtn">Play</button>
+        <button id="pauseBtn" class="secondary">Pause</button>
+        <button id="nextStepBtn" class="secondary">Next</button>
+        <label class="small" style="display:flex;align-items:center;gap:6px; margin-left:6px;">
+          Speed(ms)
+          <input id="speedInput" type="number" value="500" min="80" step="40" style="width:88px;" />
+        </label>
+        <label class="small" style="display:flex;align-items:center;gap:6px; margin-left:6px;">
+          Step
+          <input id="stepSlider" type="range" min="1" max="1" value="1" style="width:220px;" />
+        </label>
+        <span class="small mono" id="stepLabel"></span>
+      </div>
 
-      <h4>Trace Timeline</h4>
+      <div class="grid2" style="margin-top:8px;">
+        <div>
+          <h2>Code Pointer View</h2>
+          <div class="codeview" id="codeView"></div>
+        </div>
+        <div>
+          <h2>Current Call Stack</h2>
+          <div class="panel mono" id="stackPanel"></div>
+          <h2 style="margin-top:8px;">Stdout</h2>
+          <div class="panel stdout mono" id="stdoutBox"></div>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:8px;">
+        <div>
+          <h2>Loop Heatmap</h2>
+          <div class="bars" id="loopHeatmap"></div>
+          <h2 style="margin-top:8px;">Branch Coverage</h2>
+          <div class="panel mono small" id="branchPanel"></div>
+        </div>
+        <div>
+          <h2>Variable Timeline</h2>
+          <div class="btns" style="margin:0 0 6px 0;">
+            <select id="varSelect" style="max-width:220px;"></select>
+          </div>
+          <div class="panel mono small" id="varTimeline"></div>
+          <h2 style="margin-top:8px;">Complexity Hints</h2>
+          <div class="panel mono small" id="complexityPanel"></div>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:8px;">
+        <div>
+          <h2>Data Structure Views</h2>
+          <div class="panel mono small" id="dsPanel"></div>
+        </div>
+        <div>
+          <h2>Bug Detector</h2>
+          <div class="panel mono small" id="bugPanel"></div>
+        </div>
+      </div>
+
+      <h2 style="margin-top:8px;">Trace Timeline</h2>
       <div class="trace-wrap">
         <table>
           <thead>
             <tr>
-              <th style="width: 64px;">#</th>
-              <th style="width: 80px;">Line</th>
-              <th style="width: 110px;">Event</th>
+              <th style="width:58px;">#</th>
+              <th style="width:62px;">Line</th>
+              <th style="width:70px;">Depth</th>
+              <th style="width:95px;">Frame</th>
               <th>Source</th>
-              <th>Loop Iter</th>
-              <th>Changed Vars</th>
+              <th style="width:72px;">Loop</th>
+              <th>Changed</th>
             </tr>
           </thead>
           <tbody id="traceBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Diff Mode (Compare two solutions)</h2>
+      <div class="row">
+        <div>
+          <label for="codeB">Secondary Code</label>
+          <textarea id="codeB" placeholder="Paste second approach"></textarea>
+        </div>
+        <div>
+          <label for="functionNameB">Function Name</label>
+          <input id="functionNameB" placeholder="e.g. twoSum" />
+          <label for="argsB" style="margin-top:8px;">Args JSON array</label>
+          <input id="argsB" placeholder='e.g. [[2,7,11,15], 9]' />
+          <div class="btns" style="margin-top:8px;">
+            <button id="runDiffBtn" class="secondary">Run Diff</button>
+          </div>
+          <div class="panel mono small" id="diffPanel" style="margin-top:8px;"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" id="testsCard" hidden>
+      <h2>Test Runner Results</h2>
+      <div class="trace-wrap" style="max-height:260px;">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:44px;">#</th>
+              <th>Args</th>
+              <th style="width:120px;">Status</th>
+              <th style="width:100px;">Steps</th>
+              <th>Return/Error</th>
+            </tr>
+          </thead>
+          <tbody id="testsBody"></tbody>
         </table>
       </div>
     </section>
@@ -252,23 +250,47 @@
     const codeEl = document.getElementById("code");
     const functionNameEl = document.getElementById("functionName");
     const argsEl = document.getElementById("args");
+    const testArgsEl = document.getElementById("testArgs");
 
-    const runBtn = document.getElementById("runBtn");
-    const sampleBtn = document.getElementById("sampleBtn");
-    const clearBtn = document.getElementById("clearBtn");
+    const codeBEl = document.getElementById("codeB");
+    const functionNameBEl = document.getElementById("functionNameB");
+    const argsBEl = document.getElementById("argsB");
 
     const errorCard = document.getElementById("errorCard");
     const errorBox = document.getElementById("errorBox");
-
     const resultCard = document.getElementById("resultCard");
+
     const stepsPill = document.getElementById("stepsPill");
     const loopsPill = document.getElementById("loopsPill");
     const returnPill = document.getElementById("returnPill");
     const stdoutBox = document.getElementById("stdoutBox");
+
     const traceBody = document.getElementById("traceBody");
+    const codeView = document.getElementById("codeView");
+    const stackPanel = document.getElementById("stackPanel");
+    const loopHeatmap = document.getElementById("loopHeatmap");
+    const branchPanel = document.getElementById("branchPanel");
+    const varSelect = document.getElementById("varSelect");
+    const varTimeline = document.getElementById("varTimeline");
+    const complexityPanel = document.getElementById("complexityPanel");
+    const dsPanel = document.getElementById("dsPanel");
+    const bugPanel = document.getElementById("bugPanel");
+
+    const stepSlider = document.getElementById("stepSlider");
+    const stepLabel = document.getElementById("stepLabel");
+    const speedInput = document.getElementById("speedInput");
+
+    const testsCard = document.getElementById("testsCard");
+    const testsBody = document.getElementById("testsBody");
+    const diffPanel = document.getElementById("diffPanel");
+
+    let currentResult = null;
+    let currentStepIdx = 0;
+    let playTimer = null;
+    let varHistory = {};
 
     function escapeHtml(str) {
-      return str
+      return String(str)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
@@ -286,85 +308,443 @@
       errorBox.textContent = "";
     }
 
-    function clearResults() {
-      resultCard.hidden = true;
-      traceBody.innerHTML = "";
-      stdoutBox.textContent = "";
+    function clearPlay() {
+      if (playTimer) {
+        clearInterval(playTimer);
+        playTimer = null;
+      }
     }
 
-    function renderResult(result) {
-      const { summary, return_value, stdout, steps } = result;
+    function clearAllViews() {
+      clearPlay();
+      resultCard.hidden = true;
+      testsCard.hidden = true;
+      traceBody.innerHTML = "";
+      codeView.innerHTML = "";
+      stackPanel.textContent = "";
+      loopHeatmap.innerHTML = "";
+      branchPanel.textContent = "";
+      varTimeline.textContent = "";
+      complexityPanel.textContent = "";
+      dsPanel.textContent = "";
+      bugPanel.textContent = "";
+      testsBody.innerHTML = "";
+      diffPanel.textContent = "";
+      currentResult = null;
+      currentStepIdx = 0;
+      varHistory = {};
+    }
+
+    async function callVisualizer(payload) {
+      const response = await fetch("/api/visualize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      return response.json();
+    }
+
+    function buildVarHistory(steps) {
+      const history = {};
+      for (const step of steps) {
+        for (const [k, v] of Object.entries(step.changed || {})) {
+          if (!history[k]) history[k] = [];
+          history[k].push({ step: step.idx, value: v, line: step.line });
+        }
+        for (const k of (step.deleted || [])) {
+          if (!history[k]) history[k] = [];
+          history[k].push({ step: step.idx, value: "<deleted>", line: step.line });
+        }
+      }
+      return history;
+    }
+
+    function renderCodeView(sourceLines) {
+      codeView.innerHTML = "";
+      sourceLines.forEach((line, i) => {
+        const row = document.createElement("div");
+        row.className = "code-line";
+        row.dataset.line = String(i + 1);
+        row.innerHTML = `<span class="ln">${i + 1}</span><span class="mono">${escapeHtml(line || "")}</span>`;
+        codeView.appendChild(row);
+      });
+    }
+
+    function highlightLine(lineNo) {
+      codeView.querySelectorAll(".code-line.active").forEach((el) => el.classList.remove("active"));
+      const row = codeView.querySelector(`.code-line[data-line="${lineNo}"]`);
+      if (row) {
+        row.classList.add("active");
+        row.scrollIntoView({ block: "nearest" });
+      }
+    }
+
+    function renderTraceTable(steps) {
+      traceBody.innerHTML = "";
+      for (const step of steps) {
+        const changed = Object.entries(step.changed || {}).map(([k, v]) => `${k}=${v}`).join("\\n");
+        const tr = document.createElement("tr");
+        tr.dataset.step = String(step.idx);
+        tr.innerHTML = `
+          <td class="mono">${step.idx}</td>
+          <td class="mono">${step.line || "-"}</td>
+          <td class="mono">${step.depth || "-"}</td>
+          <td class="mono">${escapeHtml(step.frame || "-")}</td>
+          <td class="mono">${escapeHtml(step.source || "")}</td>
+          <td class="mono">${step.loop_iteration || "-"}</td>
+          <td class="mono">${escapeHtml(changed || "-")}</td>`;
+        traceBody.appendChild(tr);
+      }
+    }
+
+    function renderLoopHeatmap(steps, loopLines) {
+      const counts = {};
+      for (const step of steps) {
+        if (step.loop_iteration) counts[step.line] = Math.max(counts[step.line] || 0, step.loop_iteration);
+      }
+      const maxCount = Math.max(1, ...Object.values(counts));
+      loopHeatmap.innerHTML = "";
+      if (!loopLines.length) {
+        loopHeatmap.innerHTML = "<div class='small mono'>No loops detected.</div>";
+        return;
+      }
+      for (const line of loopLines) {
+        const n = counts[line] || 0;
+        const pct = Math.round((n / maxCount) * 100);
+        const row = document.createElement("div");
+        row.className = "bar";
+        row.innerHTML = `<div class='mono'>line ${line}</div><div class='bar-track'><div class='bar-fill' style='width:${pct}%;'></div></div><div class='mono'>${n}</div>`;
+        loopHeatmap.appendChild(row);
+      }
+    }
+
+    function computeBranchCoverage(steps, branchMeta) {
+      const map = {};
+      for (const b of branchMeta || []) {
+        map[b.line] = { line: b.line, trueCount: 0, falseCount: 0, bodyStart: b.body_start, elseStart: b.else_start };
+      }
+
+      for (let i = 0; i < steps.length - 1; i++) {
+        const s = steps[i];
+        if (!map[s.line]) continue;
+        if (s.event !== "line") continue;
+        let j = i + 1;
+        while (j < steps.length && steps[j].event !== "line") j += 1;
+        if (j >= steps.length) continue;
+        const nextLine = steps[j].line;
+        const bm = map[s.line];
+
+        if (nextLine === bm.bodyStart) {
+          bm.trueCount += 1;
+        } else if (bm.elseStart && nextLine === bm.elseStart) {
+          bm.falseCount += 1;
+        } else if (!bm.elseStart && nextLine !== bm.bodyStart) {
+          bm.falseCount += 1;
+        }
+      }
+      return Object.values(map);
+    }
+
+    function renderBranchCoverage(steps, summary) {
+      const cov = computeBranchCoverage(steps, summary.branch_meta || []);
+      if (!cov.length) {
+        branchPanel.textContent = "No if/else branches detected.";
+        return;
+      }
+      const lines = [];
+      let hit = 0;
+      for (const b of cov) {
+        const touched = b.trueCount + b.falseCount > 0;
+        if (touched) hit += 1;
+        lines.push(`line ${b.line}: true=${b.trueCount}, false=${b.falseCount}`);
+      }
+      lines.unshift(`covered lines: ${hit}/${cov.length}`);
+      branchPanel.textContent = lines.join("\n");
+    }
+
+    function estimateComplexity(steps, summary, sourceLines) {
+      const loopIters = {};
+      for (const s of steps) if (s.loop_iteration) loopIters[s.line] = Math.max(loopIters[s.line] || 0, s.loop_iteration);
+      const loopCount = summary.loop_lines.length;
+      const maxDepth = Math.max(1, ...steps.map((s) => s.depth || 1));
+      let hint = "O(1)";
+      const evidence = [];
+
+      if (loopCount === 0 && maxDepth <= 1) {
+        hint = "O(1) or input-independent";
+        evidence.push("No loops observed in trace.");
+      } else if (loopCount === 1) {
+        hint = "O(n) likely";
+        evidence.push(`Single loop line observed: ${summary.loop_lines.join(", ")}`);
+      } else {
+        hint = "O(n^2) or higher likely";
+        evidence.push(`Multiple loop lines observed: ${summary.loop_lines.join(", ")}`);
+      }
+
+      if (maxDepth > 1) {
+        evidence.push(`Call depth reached ${maxDepth} (helper calls/recursion present).`);
+      }
+
+      if (sourceLines.some((x) => x.includes("sort("))) {
+        evidence.push("Sorting call detected, often O(n log n). ");
+      }
+
+      return `${hint}\n${evidence.join("\n")}`;
+    }
+
+    function renderVarSelector(history) {
+      varSelect.innerHTML = "";
+      const names = Object.keys(history);
+      if (!names.length) {
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "No variable changes";
+        varSelect.appendChild(opt);
+        varTimeline.textContent = "No variable history available.";
+        return;
+      }
+      for (const n of names) {
+        const opt = document.createElement("option");
+        opt.value = n;
+        opt.textContent = n;
+        varSelect.appendChild(opt);
+      }
+      renderVarTimeline(names[0]);
+    }
+
+    function renderVarTimeline(name) {
+      const arr = varHistory[name] || [];
+      if (!arr.length) {
+        varTimeline.textContent = "No timeline";
+        return;
+      }
+      const rows = arr.slice(-60).map((x) => `step ${x.step} (line ${x.line}): ${x.value}`);
+      varTimeline.textContent = rows.join("\n");
+    }
+
+    function describeDataStructures(step) {
+      const locals = step.locals || {};
+      const lines = [];
+      const pointers = [];
+      const ptrNames = new Set(["i", "j", "k", "left", "right", "l", "r", "lo", "hi", "mid", "start", "end"]);
+
+      for (const [k, v] of Object.entries(locals)) {
+        if (ptrNames.has(k)) pointers.push(`${k}=${v}`);
+        if (v.startsWith("[") && v.endsWith("]")) lines.push(`Array/List ${k}: ${v}`);
+        if (v.startsWith("{") && v.endsWith("}")) lines.push(`Map/Set ${k}: ${v}`);
+        const lk = k.toLowerCase();
+        if (lk.includes("stack") || lk.includes("queue") || lk.includes("deque")) lines.push(`Stack/Queue ${k}: ${v}`);
+        if (lk.includes("head") || lk.includes("root") || lk.includes("graph") || lk.includes("node")) lines.push(`Linked/Tree/Graph handle ${k}: ${v}`);
+      }
+      if (pointers.length) lines.unshift(`Pointers: ${pointers.join(", ")}`);
+      if (!lines.length) lines.push("No recognizable DS snapshot in this step.");
+      return lines.join("\n");
+    }
+
+    function detectBugs(result, code, argsText) {
+      const lines = code.split("\n");
+      const warnings = [];
+      if (result.return_value === "None" && lines.some((x) => x.trim().startsWith("def "))) {
+        warnings.push("Return value is None. If expected output exists, add explicit return on all paths.");
+      }
+      if (code.includes(".index(") && code.includes("for ")) {
+        warnings.push("Using .index() inside loop may cause O(n^2) behavior.");
+      }
+      if (/range\(len\(.+\)-1\)/.test(code)) {
+        warnings.push("Check off-by-one around range(len(x)-1). Ensure last element is intended to be skipped.");
+      }
+      if (/for\s+\w+\s+in\s+\w+\s*:\s*\n\s*\w+\.remove\(/.test(code)) {
+        warnings.push("Modifying a collection while iterating can skip elements.");
+      }
+      try {
+        JSON.parse(argsText || "[]");
+      } catch {
+        warnings.push("Args are not valid JSON array format.");
+      }
+      if (!warnings.length) warnings.push("No obvious issues flagged by heuristic checks.");
+      return warnings.join("\n");
+    }
+
+    function updateStepView(idx) {
+      if (!currentResult) return;
+      const steps = currentResult.steps;
+      if (!steps.length) return;
+      currentStepIdx = Math.max(0, Math.min(idx, steps.length - 1));
+      const step = steps[currentStepIdx];
+
+      stepSlider.value = String(step.idx);
+      stepLabel.textContent = `step ${step.idx}/${steps.length}, line ${step.line || "-"}`;
+      highlightLine(step.line);
+
+      stackPanel.textContent = (step.stack && step.stack.length) ? step.stack.join(" -> ") : "(no stack info)";
+      dsPanel.textContent = describeDataStructures(step);
+
+      traceBody.querySelectorAll("tr").forEach((tr) => {
+        tr.style.background = tr.dataset.step === String(step.idx) ? "#fff7d4" : "transparent";
+      });
+    }
+
+    function renderResult(result, sourceCode, argsText) {
+      currentResult = result;
+      const { summary, return_value, stdout, steps, source_lines } = result;
+
       stepsPill.textContent = `Total Steps: ${summary.total_steps}`;
       loopsPill.textContent = `Loop Lines: ${summary.loop_lines.length ? summary.loop_lines.join(", ") : "None"}`;
       returnPill.textContent = `Return: ${return_value}`;
       stdoutBox.textContent = stdout || "<no output>";
 
-      traceBody.innerHTML = "";
-      for (const step of steps) {
-        const changed = Object.entries(step.changed || {})
-          .map(([k, v]) => `${k} = ${v}`)
-          .join("\n");
+      renderCodeView(source_lines || sourceCode.split("\n"));
+      renderTraceTable(steps);
+      renderLoopHeatmap(steps, summary.loop_lines || []);
+      renderBranchCoverage(steps, summary);
 
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td class="mono">${step.idx}</td>
-          <td class="mono">${step.line}</td>
-          <td>${escapeHtml(step.event)}</td>
-          <td class="mono">${escapeHtml(step.source || "")}</td>
-          <td class="mono">${step.loop_iteration || "-"}</td>
-          <td class="mono">${escapeHtml(changed || "-")}</td>
-        `;
-        traceBody.appendChild(tr);
-      }
+      varHistory = buildVarHistory(steps);
+      renderVarSelector(varHistory);
 
+      complexityPanel.textContent = estimateComplexity(steps, summary, sourceCode.split("\n"));
+      bugPanel.textContent = detectBugs(result, sourceCode, argsText);
+
+      stepSlider.min = "1";
+      stepSlider.max = String(Math.max(1, steps.length));
+      stepSlider.value = "1";
+      updateStepView(0);
       resultCard.hidden = false;
     }
 
-    async function runVisualization() {
+    async function runPrimary() {
       clearError();
-      clearResults();
-
-      const payload = {
-        code: codeEl.value,
-        function_name: functionNameEl.value.trim(),
-        args: argsEl.value.trim(),
-      };
-
+      clearAllViews();
+      const payload = { code: codeEl.value, function_name: functionNameEl.value.trim(), args: argsEl.value.trim() };
       try {
-        const response = await fetch("/api/visualize", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        const data = await response.json();
+        const data = await callVisualizer(payload);
         if (!data.ok) {
-          const msg = `${data.error?.type || "Error"}: ${data.error?.message || "Unknown failure"}\n\n${data.error?.traceback || ""}`;
-          setError(msg);
+          setError(`${data.error?.type || "Error"}: ${data.error?.message || "Unknown"}\n\n${data.error?.traceback || ""}`);
           return;
         }
-
-        renderResult(data.result);
+        renderResult(data.result, codeEl.value, argsEl.value.trim());
       } catch (err) {
-        setError(`Network or server error: ${err.message}`);
+        setError(`Network/server error: ${err.message}`);
       }
     }
 
-    runBtn.addEventListener("click", runVisualization);
+    async function runTests() {
+      clearError();
+      testsBody.innerHTML = "";
+      testsCard.hidden = false;
 
-    sampleBtn.addEventListener("click", () => {
-      functionNameEl.value = "two_sum";
+      const lines = testArgsEl.value.split("\n").map((x) => x.trim()).filter(Boolean);
+      if (!lines.length) {
+        setError("Test Runner: add one JSON args array per line.");
+        return;
+      }
+
+      for (let i = 0; i < lines.length; i++) {
+        const argsLine = lines[i];
+        const payload = { code: codeEl.value, function_name: functionNameEl.value.trim(), args: argsLine };
+        let status = "OK";
+        let steps = "-";
+        let out = "";
+        try {
+          const data = await callVisualizer(payload);
+          if (!data.ok) {
+            status = "ERROR";
+            out = `${data.error?.type || "Error"}: ${data.error?.message || "Unknown"}`;
+          } else {
+            steps = String(data.result.summary.total_steps);
+            out = data.result.return_value;
+          }
+        } catch (err) {
+          status = "ERROR";
+          out = err.message;
+        }
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${i + 1}</td><td class='mono'>${escapeHtml(argsLine)}</td><td class='mono'>${status}</td><td>${steps}</td><td class='mono'>${escapeHtml(out)}</td>`;
+        testsBody.appendChild(tr);
+      }
+    }
+
+    async function runDiff() {
+      clearError();
+      diffPanel.textContent = "Running...";
+      const p1 = { code: codeEl.value, function_name: functionNameEl.value.trim(), args: argsEl.value.trim() };
+      const p2 = { code: codeBEl.value, function_name: functionNameBEl.value.trim(), args: argsBEl.value.trim() };
+      try {
+        const [a, b] = await Promise.all([callVisualizer(p1), callVisualizer(p2)]);
+        if (!a.ok || !b.ok) {
+          diffPanel.textContent = `Diff failed. A=${a.error?.message || "ok"} | B=${b.error?.message || "ok"}`;
+          return;
+        }
+        const sa = a.result.summary.total_steps;
+        const sb = b.result.summary.total_steps;
+        const la = a.result.summary.loop_lines.length;
+        const lb = b.result.summary.loop_lines.length;
+        const ra = a.result.return_value;
+        const rb = b.result.return_value;
+
+        const lines = [];
+        lines.push(`A steps: ${sa}`);
+        lines.push(`B steps: ${sb}`);
+        lines.push(`A loop lines: ${la}`);
+        lines.push(`B loop lines: ${lb}`);
+        lines.push(`Same return output: ${ra === rb ? "yes" : "no"} (A=${ra}, B=${rb})`);
+        if (sa < sb) lines.push("A appears more efficient for this input (fewer trace steps).");
+        else if (sb < sa) lines.push("B appears more efficient for this input (fewer trace steps).");
+        else lines.push("Both have similar trace step count on this input.");
+
+        diffPanel.textContent = lines.join("\n");
+      } catch (err) {
+        diffPanel.textContent = `Diff error: ${err.message}`;
+      }
+    }
+
+    document.getElementById("runBtn").addEventListener("click", runPrimary);
+    document.getElementById("runTestsBtn").addEventListener("click", runTests);
+    document.getElementById("runDiffBtn").addEventListener("click", runDiff);
+
+    document.getElementById("sampleBtn").addEventListener("click", () => {
+      functionNameEl.value = "twoSum";
       argsEl.value = "[[2,7,11,15], 9]";
-      codeEl.value = `def two_sum(nums, target):\n    seen = {}\n    for i in range(len(nums)):\n        need = target - nums[i]\n        if need in seen:\n            return [seen[need], i]\n        seen[nums[i]] = i\n    return []`;
+      testArgsEl.value = "[[2,7,11,15], 9]\n[[3,2,4], 6]";
+      codeEl.value = `class Solution:\n    def twoSum(self, nums: List[int], target: int) -> List[int]:\n        d = {}\n        for i, n in enumerate(nums):\n            need = target - n\n            if need in d:\n                return [d[need], i]\n            d[n] = i\n        return []`;
+      codeBEl.value = `class Solution:\n    def twoSum(self, nums: List[int], target: int) -> List[int]:\n        for i in range(len(nums)):\n            for j in range(i+1, len(nums)):\n                if nums[i] + nums[j] == target:\n                    return [i, j]\n        return []`;
+      functionNameBEl.value = "twoSum";
+      argsBEl.value = argsEl.value;
     });
 
-    clearBtn.addEventListener("click", () => {
+    document.getElementById("clearBtn").addEventListener("click", () => {
       codeEl.value = "";
       functionNameEl.value = "";
       argsEl.value = "";
+      testArgsEl.value = "";
+      codeBEl.value = "";
+      functionNameBEl.value = "";
+      argsBEl.value = "";
       clearError();
-      clearResults();
+      clearAllViews();
     });
+
+    document.getElementById("prevStepBtn")?.addEventListener("click", () => updateStepView(currentStepIdx - 1));
+    document.getElementById("nextStepBtn")?.addEventListener("click", () => updateStepView(currentStepIdx + 1));
+    document.getElementById("playBtn")?.addEventListener("click", () => {
+      clearPlay();
+      const speed = Math.max(80, Number(speedInput.value) || 500);
+      playTimer = setInterval(() => {
+        if (!currentResult || currentStepIdx >= currentResult.steps.length - 1) {
+          clearPlay();
+          return;
+        }
+        updateStepView(currentStepIdx + 1);
+      }, speed);
+    });
+    document.getElementById("pauseBtn")?.addEventListener("click", clearPlay);
+
+    stepSlider.addEventListener("input", () => {
+      const target = Math.max(1, Number(stepSlider.value || "1"));
+      updateStepView(target - 1);
+    });
+
+    varSelect.addEventListener("change", () => renderVarTimeline(varSelect.value));
   </script>
 </body>
 </html>
