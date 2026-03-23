@@ -16,6 +16,11 @@
       --border: #c8d9e8;
       --danger: #a92020;
       --ok: #1d7a4b;
+      --shadow: 0 14px 30px rgba(8, 49, 79, 0.12);
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+      --dur-fast: 180ms;
+      --dur-med: 320ms;
+      --dur-slow: 520ms;
     }
 
     * { box-sizing: border-box; }
@@ -25,10 +30,39 @@
       color: var(--ink);
       font-family: "Source Sans 3", "Segoe UI", sans-serif;
       padding: 16px;
+      background-size: 120% 120%;
+      animation: aurora-shift 18s ease-in-out infinite alternate;
     }
 
     .container { max-width: 1280px; margin: 0 auto; display: grid; gap: 12px; }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; box-shadow: 0 8px 18px rgba(8, 49, 79, 0.08); }
+    .card {
+      position: relative;
+      overflow: hidden;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 8px 18px rgba(8, 49, 79, 0.08);
+      transition: transform var(--dur-med) var(--ease), box-shadow var(--dur-med) var(--ease), border-color var(--dur-med) var(--ease);
+      animation: card-enter 620ms var(--ease) both;
+    }
+    .card::after {
+      content: "";
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(10, 120, 151, 0.55), transparent);
+      opacity: 0.75;
+      transform: translateX(-100%);
+      animation: shimmer 6s linear infinite;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+      border-color: #b3cbdf;
+    }
+    .section-enter { animation: card-enter 440ms var(--ease) both; }
     .row { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
@@ -42,14 +76,31 @@
     textarea, input, select {
       width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 9px;
       font-family: "JetBrains Mono", "Consolas", monospace; background: #fbfdff;
+      transition: border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease, transform var(--dur-fast) ease, background var(--dur-fast) ease;
     }
     textarea { min-height: 210px; resize: vertical; }
+    textarea:focus, input:focus, select:focus {
+      outline: none;
+      border-color: #86b8cb;
+      box-shadow: 0 0 0 3px rgba(10, 120, 151, 0.12);
+      background: #ffffff;
+    }
 
     label { display: block; margin-bottom: 5px; font-weight: 700; }
     .btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
     button {
       border: none; border-radius: 10px; padding: 9px 12px; cursor: pointer;
       background: var(--accent); color: #fff; font-weight: 700;
+      transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease), filter var(--dur-fast) ease, background var(--dur-fast) ease;
+      box-shadow: 0 10px 18px rgba(10, 120, 151, 0.18);
+    }
+    button:hover {
+      transform: translateY(-1px);
+      filter: saturate(1.05);
+    }
+    button:active {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: 0 6px 12px rgba(10, 120, 151, 0.2);
     }
     button.secondary { background: #d8e9f6; color: #163347; }
     button.warn { background: #8a2d2d; }
@@ -57,33 +108,351 @@
     .error { color: var(--danger); white-space: pre-wrap; font-size: 0.88rem; }
     .ok { color: var(--ok); }
 
-    .pill { border: 1px solid #c9e8f2; background: var(--accent-2); border-radius: 10px; padding: 7px; font-size: 0.9rem; }
+    .pill {
+      border: 1px solid #c9e8f2;
+      background: var(--accent-2);
+      border-radius: 10px;
+      padding: 7px;
+      font-size: 0.9rem;
+      transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) ease;
+    }
+    .pulse { animation: soft-pop 420ms var(--ease); }
 
     .codeview {
       border: 1px solid var(--border); border-radius: 10px; overflow: auto; max-height: 360px; background: #f9fcff;
       font-family: "JetBrains Mono", monospace; font-size: 0.86rem;
+      scroll-behavior: smooth;
     }
-    .code-line { display: grid; grid-template-columns: 54px 1fr; padding: 3px 8px; border-bottom: 1px solid #edf3f8; }
+    .code-line {
+      display: grid;
+      grid-template-columns: 54px 1fr;
+      padding: 3px 8px;
+      border-bottom: 1px solid #edf3f8;
+      transition: background var(--dur-fast) ease, transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) ease;
+    }
     .code-line .ln { color: #8098ad; }
-    .code-line.active { background: var(--line-hi); }
+    .code-line.active {
+      background: var(--line-hi);
+      transform: translateX(4px);
+      box-shadow: inset 3px 0 0 #f0c247;
+      animation: line-glow 880ms ease-out;
+    }
 
     .trace-wrap { max-height: 360px; overflow: auto; border: 1px solid var(--border); border-radius: 10px; }
     table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 0.86rem; }
     th, td { border-bottom: 1px solid #e4edf5; text-align: left; vertical-align: top; padding: 7px; word-wrap: break-word; }
     th { position: sticky; top: 0; background: #f1f8fd; z-index: 1; }
+    tbody tr { transition: background var(--dur-fast) ease, transform var(--dur-fast) var(--ease); }
+    tbody tr.active-step {
+      background: #fff7d4;
+      transform: translateX(3px);
+    }
 
     .bars { display: grid; gap: 6px; }
     .bar { display: grid; grid-template-columns: 78px 1fr 48px; align-items: center; gap: 8px; }
     .bar-track { height: 10px; background: #d8e6f1; border-radius: 999px; overflow: hidden; }
-    .bar-fill { height: 100%; background: #0a7897; }
+    .bar-fill {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, #0a7897, #26a0c1);
+      transition: width var(--dur-slow) var(--ease);
+    }
 
-    .panel { border: 1px solid var(--border); border-radius: 10px; padding: 8px; background: #fbfdff; min-height: 70px; }
+    .panel {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px;
+      background: #fbfdff;
+      min-height: 70px;
+      transition: border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease, transform var(--dur-fast) var(--ease);
+    }
+    .panel-flash {
+      animation: panel-flash 420ms ease-out;
+    }
     .small { font-size: 0.85rem; }
     .stdout { white-space: pre-wrap; min-height: 44px; }
+    .array-grid { display:flex; flex-wrap:wrap; gap:6px; }
+    .array-cell {
+      min-width: 46px;
+      padding: 4px;
+      border-radius: 8px;
+      border: 1px solid #cbddeb;
+      background: #fff;
+      box-shadow: 0 4px 10px rgba(14, 61, 91, 0.05);
+      transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) ease, border-color var(--dur-fast) ease, background var(--dur-fast) ease;
+      animation: cell-enter 320ms var(--ease) both;
+    }
+    .array-cell.pointer-hit {
+      border: 2px solid #0a7897;
+      background: #e9f7fd;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 18px rgba(10, 120, 151, 0.16);
+    }
+    .pointer-tag { font-size: 11px; color: #0a7897; margin-top: 2px; }
+    .loop-anim { display: grid; gap: 12px; }
+    .loop-hero {
+      display: grid;
+      grid-template-columns: 112px 1fr;
+      gap: 12px;
+      align-items: center;
+    }
+    .loop-ring {
+      --loop-progress: 0%;
+      position: relative;
+      width: 104px;
+      height: 104px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background:
+        conic-gradient(#0a7897 var(--loop-progress), rgba(10, 120, 151, 0.12) 0),
+        radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.95), #eef8fc);
+      box-shadow: 0 16px 28px rgba(10, 120, 151, 0.16);
+      animation: ring-pop 360ms var(--ease);
+    }
+    .loop-ring::after {
+      content: "";
+      position: absolute;
+      inset: 10px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #ffffff, #f4fbfe);
+      border: 1px solid rgba(10, 120, 151, 0.12);
+    }
+    .loop-ring-inner {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      gap: 2px;
+      text-align: center;
+    }
+    .loop-ring-inner strong { font-size: 1.75rem; line-height: 1; }
+    .loop-ring-inner span { font-size: 0.82rem; color: var(--muted); }
+    .loop-kicker {
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .loop-source {
+      font-size: 0.92rem;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: #f5fbfe;
+      border: 1px solid #d7e8f1;
+    }
+    .loop-changed {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .loop-lane {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scroll-behavior: smooth;
+    }
+    .loop-node {
+      min-width: 132px;
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid #d7e8f1;
+      background: #f8fcff;
+      display: grid;
+      gap: 8px;
+      opacity: 0.78;
+      transform: scale(0.97);
+      transition: transform var(--dur-fast) var(--ease), opacity var(--dur-fast) ease, box-shadow var(--dur-fast) ease, background var(--dur-fast) ease;
+      animation: loop-node-enter 320ms var(--ease) both;
+    }
+    .loop-node.current {
+      background: linear-gradient(180deg, #0d8aa9, #0a7897);
+      color: #ffffff;
+      opacity: 1;
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 16px 30px rgba(10, 120, 151, 0.24);
+      border-color: rgba(255, 255, 255, 0.28);
+    }
+    .loop-node.current .loop-node-source,
+    .loop-node.current .loop-node-value {
+      color: rgba(255, 255, 255, 0.92);
+    }
+    .loop-node.future { opacity: 0.58; }
+    .loop-node-label {
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 700;
+    }
+    .loop-node-source {
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .loop-node-values {
+      display: grid;
+      gap: 3px;
+    }
+    .loop-node-value {
+      font-size: 0.78rem;
+      color: var(--ink);
+    }
+    .loop-vars {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .loop-var-chip {
+      display: grid;
+      gap: 4px;
+      min-width: 110px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid #d7e8f1;
+      background: #ffffff;
+      box-shadow: 0 8px 18px rgba(8, 49, 79, 0.05);
+      animation: chip-rise 320ms var(--ease) both;
+    }
+    .loop-var-chip.changed {
+      border-color: #f0c247;
+      background: #fff7da;
+      box-shadow: 0 12px 22px rgba(240, 194, 71, 0.2);
+      animation: chip-burst 420ms var(--ease) both;
+    }
+    .loop-var-name {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .loop-var-value {
+      font-size: 0.92rem;
+      color: var(--ink);
+    }
+    .loop-empty {
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px dashed #c8d9e8;
+      color: var(--muted);
+      background: #f9fcff;
+    }
+    .loop-array {
+      display: grid;
+      gap: 8px;
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid #d7e8f1;
+      background: #f8fcff;
+    }
+    .loop-array-label {
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    @keyframes aurora-shift {
+      from { background-position: 0% 0%; }
+      to { background-position: 100% 100%; }
+    }
+
+    @keyframes card-enter {
+      from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.985);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes soft-pop {
+      0% { transform: scale(0.97); box-shadow: 0 0 0 rgba(10, 120, 151, 0); }
+      50% { transform: scale(1.015); box-shadow: 0 12px 22px rgba(10, 120, 151, 0.14); }
+      100% { transform: scale(1); box-shadow: 0 0 0 rgba(10, 120, 151, 0); }
+    }
+
+    @keyframes line-glow {
+      0% { box-shadow: inset 3px 0 0 #f0c247, 0 0 0 rgba(240, 194, 71, 0); }
+      60% { box-shadow: inset 3px 0 0 #f0c247, 0 0 0 6px rgba(240, 194, 71, 0.15); }
+      100% { box-shadow: inset 3px 0 0 #f0c247, 0 0 0 rgba(240, 194, 71, 0); }
+    }
+
+    @keyframes panel-flash {
+      0% { border-color: #c8d9e8; box-shadow: 0 0 0 rgba(10, 120, 151, 0); }
+      50% { border-color: #86b8cb; box-shadow: 0 0 0 4px rgba(10, 120, 151, 0.09); }
+      100% { border-color: #c8d9e8; box-shadow: 0 0 0 rgba(10, 120, 151, 0); }
+    }
+
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      20%, 100% { transform: translateX(100%); }
+    }
+
+    @keyframes cell-enter {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes ring-pop {
+      from {
+        opacity: 0;
+        transform: scale(0.92) rotate(-14deg);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+      }
+    }
+
+    @keyframes loop-node-enter {
+      from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.96);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes chip-rise {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes chip-burst {
+      0% { transform: translateY(8px) scale(0.96); }
+      60% { transform: translateY(-2px) scale(1.03); }
+      100% { transform: translateY(0) scale(1); }
+    }
 
     @media (max-width: 980px) {
       .row, .grid2, .grid3 { grid-template-columns: 1fr; }
       textarea { min-height: 180px; }
+      .loop-hero { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition-duration: 0ms !important;
+        scroll-behavior: auto !important;
+      }
     }
   </style>
 </head>
@@ -105,6 +474,12 @@
 
         <label for="args" style="margin-top:8px;">Args JSON array</label>
         <input id="args" placeholder='e.g. [[2,7,11,15], 9]' />
+        <label for="watchExpr" style="margin-top:8px;">Watch Expression (optional)</label>
+        <input id="watchExpr" placeholder='e.g. i==j or target in seen' />
+        <label class="small" style="display:flex;align-items:center;gap:6px; margin-top:6px;">
+          <input id="stopOnWatch" type="checkbox" />
+          Stop execution on first watch hit
+        </label>
 
         <div class="btns">
           <button id="runBtn">Run Visualizer</button>
@@ -115,6 +490,12 @@
         <label for="testArgs" style="margin-top:10px;">Test Runner Args (one JSON array per line)</label>
         <textarea id="testArgs" style="min-height:120px" placeholder='[[2,7,11,15],9]\n[[3,2,4],6]'></textarea>
         <button id="runTestsBtn" class="secondary" style="margin-top:8px;">Run Test Runner</button>
+
+        <label for="profileN" style="margin-top:10px;">Profiler N values (comma-separated)</label>
+        <input id="profileN" placeholder="e.g. 10,20,40,80" />
+        <label for="profileArgsExpr" style="margin-top:8px;">Profiler args expression (use N)</label>
+        <input id="profileArgsExpr" placeholder='e.g. [list(range(N)), N-1]' />
+        <button id="runProfileBtn" class="secondary" style="margin-top:8px;">Run Complexity Profiler</button>
       </div>
     </section>
 
@@ -181,10 +562,25 @@
         <div>
           <h2>Data Structure Views</h2>
           <div class="panel mono small" id="dsPanel"></div>
+          <h2 style="margin-top:8px;">Loop State Animator</h2>
+          <div class="panel mono small" id="pointerPanel"></div>
         </div>
         <div>
           <h2>Bug Detector</h2>
           <div class="panel mono small" id="bugPanel"></div>
+          <h2 style="margin-top:8px;">Watch Hits</h2>
+          <div class="panel mono small" id="watchPanel"></div>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:8px;">
+        <div>
+          <h2>CFG + Path Explorer</h2>
+          <div class="panel mono small" id="cfgPanel"></div>
+        </div>
+        <div>
+          <h2>Current Path Slice</h2>
+          <div class="panel mono small" id="pathPanel"></div>
         </div>
       </div>
 
@@ -244,13 +640,22 @@
         </table>
       </div>
     </section>
+
+    <section class="card" id="profileCard" hidden>
+      <h2>Complexity Profiler</h2>
+      <div class="panel mono small" id="profilePanel"></div>
+    </section>
   </main>
 
   <script>
     const codeEl = document.getElementById("code");
     const functionNameEl = document.getElementById("functionName");
     const argsEl = document.getElementById("args");
+    const watchExprEl = document.getElementById("watchExpr");
+    const stopOnWatchEl = document.getElementById("stopOnWatch");
     const testArgsEl = document.getElementById("testArgs");
+    const profileNEl = document.getElementById("profileN");
+    const profileArgsExprEl = document.getElementById("profileArgsExpr");
 
     const codeBEl = document.getElementById("codeB");
     const functionNameBEl = document.getElementById("functionNameB");
@@ -274,7 +679,11 @@
     const varTimeline = document.getElementById("varTimeline");
     const complexityPanel = document.getElementById("complexityPanel");
     const dsPanel = document.getElementById("dsPanel");
+    const pointerPanel = document.getElementById("pointerPanel");
     const bugPanel = document.getElementById("bugPanel");
+    const watchPanel = document.getElementById("watchPanel");
+    const cfgPanel = document.getElementById("cfgPanel");
+    const pathPanel = document.getElementById("pathPanel");
 
     const stepSlider = document.getElementById("stepSlider");
     const stepLabel = document.getElementById("stepLabel");
@@ -283,6 +692,8 @@
     const testsCard = document.getElementById("testsCard");
     const testsBody = document.getElementById("testsBody");
     const diffPanel = document.getElementById("diffPanel");
+    const profileCard = document.getElementById("profileCard");
+    const profilePanel = document.getElementById("profilePanel");
 
     let currentResult = null;
     let currentStepIdx = 0;
@@ -299,13 +710,38 @@
     }
 
     function setError(message) {
-      errorCard.hidden = false;
+      revealSection(errorCard);
       errorBox.textContent = message;
     }
 
     function clearError() {
       errorCard.hidden = true;
       errorBox.textContent = "";
+    }
+
+    function revealSection(el) {
+      if (!el) return;
+      el.hidden = false;
+      el.classList.remove("section-enter");
+      void el.offsetWidth;
+      el.classList.add("section-enter");
+    }
+
+    function flashElement(el, className = "pulse") {
+      if (!el) return;
+      el.classList.remove(className);
+      void el.offsetWidth;
+      el.classList.add(className);
+    }
+
+    function animateBarFill(el, widthPct) {
+      if (!el) return;
+      el.style.width = "0%";
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          el.style.width = `${widthPct}%`;
+        });
+      });
     }
 
     function clearPlay() {
@@ -319,6 +755,7 @@
       clearPlay();
       resultCard.hidden = true;
       testsCard.hidden = true;
+      profileCard.hidden = true;
       traceBody.innerHTML = "";
       codeView.innerHTML = "";
       stackPanel.textContent = "";
@@ -327,9 +764,18 @@
       varTimeline.textContent = "";
       complexityPanel.textContent = "";
       dsPanel.textContent = "";
+      pointerPanel.textContent = "";
       bugPanel.textContent = "";
+      watchPanel.textContent = "";
+      cfgPanel.textContent = "";
+      pathPanel.textContent = "";
       testsBody.innerHTML = "";
       diffPanel.textContent = "";
+      profilePanel.textContent = "";
+      errorCard.classList.remove("section-enter");
+      resultCard.classList.remove("section-enter");
+      testsCard.classList.remove("section-enter");
+      profileCard.classList.remove("section-enter");
       currentResult = null;
       currentStepIdx = 0;
       varHistory = {};
@@ -337,6 +783,15 @@
 
     async function callVisualizer(payload) {
       const response = await fetch("/api/visualize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      return response.json();
+    }
+
+    async function callProfiler(payload) {
+      const response = await fetch("/api/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -413,8 +868,9 @@
         const pct = Math.round((n / maxCount) * 100);
         const row = document.createElement("div");
         row.className = "bar";
-        row.innerHTML = `<div class='mono'>line ${line}</div><div class='bar-track'><div class='bar-fill' style='width:${pct}%;'></div></div><div class='mono'>${n}</div>`;
+        row.innerHTML = `<div class='mono'>line ${line}</div><div class='bar-track'><div class='bar-fill'></div></div><div class='mono'>${n}</div>`;
         loopHeatmap.appendChild(row);
+        animateBarFill(row.querySelector(".bar-fill"), pct);
       }
     }
 
@@ -565,6 +1021,212 @@
       return warnings.join("\n");
     }
 
+    function parseSimpleArray(text) {
+      try {
+        const val = JSON.parse(text.replace(/'/g, "\""));
+        return Array.isArray(val) ? val : null;
+      } catch {
+        return null;
+      }
+    }
+
+    function parseSimpleObject(text) {
+      try {
+        const normalized = text.replace(/'/g, "\"");
+        const val = JSON.parse(normalized);
+        return val && typeof val === "object" && !Array.isArray(val) ? val : null;
+      } catch {
+        return null;
+      }
+    }
+
+    function renderArrayBoxes(arr, pointers = {}) {
+      if (!arr || !arr.length) return "<span class='mono'>empty</span>";
+      let html = "<div class='array-grid'>";
+      arr.forEach((v, idx) => {
+        const tags = [];
+        for (const [k, p] of Object.entries(pointers)) if (Number(p) === idx) tags.push(k);
+        const className = `array-cell mono${tags.length ? " pointer-hit" : ""}`;
+        const tagHtml = tags.length ? `<div class="pointer-tag">${escapeHtml(tags.join(" "))}</div>` : "";
+        html += `<div class="${className}" style="animation-delay:${Math.min(idx, 10) * 32}ms">[${idx}] ${escapeHtml(String(v))}${tagHtml}</div>`;
+      });
+      html += "</div>";
+      return html;
+    }
+
+    function renderHeapTree(arr) {
+      if (!arr || !arr.length) return "Heap: empty";
+      let lines = ["Heap levels:"];
+      let level = 0;
+      let i = 0;
+      while (i < arr.length) {
+        const width = 2 ** level;
+        const vals = arr.slice(i, i + width).map((x) => String(x)).join("  ");
+        lines.push(`L${level}: ${vals}`);
+        i += width;
+        level += 1;
+      }
+      return lines.join("\n");
+    }
+
+    function formatLoopValue(value) {
+      const text = String(value);
+      if (text.length > 46) return `${text.slice(0, 43)}...`;
+      return text;
+    }
+
+    function isDisplayableLoopValue(value) {
+      const text = String(value);
+      if (text.startsWith("<")) return false;
+      return text.length <= 80;
+    }
+
+    function pickLoopKeys(locals, step) {
+      const keys = Object.keys(locals || {}).filter((key) => key !== "self");
+      const changedKeys = Object.keys(step.changed || {});
+      const preferred = ["i", "j", "k", "left", "right", "l", "r", "lo", "hi", "mid", "start", "end", "n", "m", "need", "curr", "prev", "node"];
+      const scalarKeys = keys.filter((key) => isDisplayableLoopValue(locals[key]));
+      return [...new Set([...changedKeys, ...preferred.filter((key) => keys.includes(key)), ...scalarKeys])].slice(0, 8);
+    }
+
+    function buildLoopNodeSummary(step) {
+      const locals = step.locals || {};
+      const keys = pickLoopKeys(locals, step).slice(0, 3);
+      if (!keys.length) return ["state stable"];
+      return keys.map((key) => `${key}=${formatLoopValue(locals[key])}`);
+    }
+
+    function buildLoopContext(steps, stepIdx) {
+      const loopSteps = steps.filter((step) => step.loop_iteration);
+      if (!loopSteps.length) return null;
+
+      let activeIndex = 0;
+      for (let i = 0; i < loopSteps.length; i++) {
+        if (loopSteps[i].idx <= steps[stepIdx].idx) activeIndex = i;
+      }
+
+      return {
+        loopSteps,
+        activeIndex,
+        activeStep: loopSteps[activeIndex],
+        totalIterations: loopSteps[loopSteps.length - 1].loop_iteration || loopSteps.length,
+      };
+    }
+
+    function buildLoopArrayPreview(locals, pointers) {
+      for (const [key, value] of Object.entries(locals || {})) {
+        const arr = parseSimpleArray(value);
+        if (!arr) continue;
+        return `
+          <div class="loop-array">
+            <div class="loop-array-label">Indexed Structure: ${escapeHtml(key)}</div>
+            ${renderArrayBoxes(arr, pointers)}
+          </div>`;
+      }
+      return "";
+    }
+
+    function renderLoopAnimator(steps, stepIdx) {
+      const currentStep = steps[stepIdx];
+      const context = buildLoopContext(steps, stepIdx);
+      const locals = currentStep.locals || {};
+      const pointers = {};
+      ["i", "j", "k", "left", "right", "l", "r", "lo", "hi", "mid", "start", "end"].forEach((key) => {
+        if (locals[key] !== undefined) pointers[key] = Number(locals[key]);
+      });
+
+      if (!context) {
+        const fallbackArray = buildLoopArrayPreview(locals, pointers);
+        return `
+          <div class="loop-anim">
+            <div class="loop-empty">No loop iterations detected in this trace yet. Run a loop-based example to animate variable values per iteration.</div>
+            ${fallbackArray}
+          </div>`;
+      }
+
+      const { loopSteps, activeIndex, activeStep, totalIterations } = context;
+      const iteration = activeStep.loop_iteration || 1;
+      const progress = `${Math.max(6, Math.round((iteration / Math.max(1, totalIterations)) * 100))}%`;
+      const laneStart = Math.max(0, activeIndex - 2);
+      const laneEnd = Math.min(loopSteps.length, activeIndex + 3);
+      const laneHtml = loopSteps.slice(laneStart, laneEnd).map((step, index) => {
+        const realIndex = laneStart + index;
+        let state = "past";
+        if (realIndex === activeIndex) state = "current";
+        else if (realIndex > activeIndex) state = "future";
+        return `
+          <div class="loop-node ${state}" style="animation-delay:${index * 45}ms">
+            <div class="loop-node-label">Iteration ${step.loop_iteration}</div>
+            <div class="loop-node-source mono">line ${step.line}</div>
+            <div class="loop-node-values">
+              ${buildLoopNodeSummary(step).map((line) => `<div class="loop-node-value mono">${escapeHtml(line)}</div>`).join("")}
+            </div>
+          </div>`;
+      }).join("");
+
+      const loopKeys = pickLoopKeys(locals, currentStep);
+      const loopVarsHtml = loopKeys.length
+        ? loopKeys.map((key, index) => {
+            const changed = Object.prototype.hasOwnProperty.call(currentStep.changed || {}, key);
+            return `
+              <div class="loop-var-chip${changed ? " changed" : ""}" style="animation-delay:${index * 35}ms">
+                <div class="loop-var-name">${escapeHtml(key)}</div>
+                <div class="loop-var-value mono">${escapeHtml(formatLoopValue(locals[key]))}</div>
+              </div>`;
+          }).join("")
+        : `<div class="loop-empty">No display-friendly local variables on this step.</div>`;
+
+      const changedNow = Object.entries(currentStep.changed || {}).length
+        ? Object.entries(currentStep.changed || {}).map(([key, value]) => `${key}=${formatLoopValue(value)}`).join("  |  ")
+        : "No variable changes on this step.";
+
+      const arrayPreview = buildLoopArrayPreview(locals, pointers);
+
+      return `
+        <div class="loop-anim">
+          <div class="loop-hero">
+            <div class="loop-ring" style="--loop-progress:${progress}">
+              <div class="loop-ring-inner">
+                <strong>${iteration}</strong>
+                <span>of ${totalIterations}</span>
+              </div>
+            </div>
+            <div class="loop-meta">
+              <div class="loop-kicker mono">Loop line ${activeStep.line} | step ${currentStep.idx}</div>
+              <div class="loop-source mono">${escapeHtml(currentStep.source || activeStep.source || "")}</div>
+              <div class="loop-changed mono">${escapeHtml(changedNow)}</div>
+            </div>
+          </div>
+          <div class="loop-lane">${laneHtml}</div>
+          <div class="loop-vars">${loopVarsHtml}</div>
+          ${arrayPreview}
+        </div>`;
+    }
+
+    function renderCFG(summary) {
+      const cfg = summary.cfg || { nodes: [], edges: [] };
+      if (!cfg.nodes.length) {
+        cfgPanel.textContent = "CFG unavailable for this code shape.";
+        return;
+      }
+      const lines = [`nodes: ${cfg.nodes.join(", ")}`, "edges:"];
+      cfg.edges.slice(0, 120).forEach((e) => lines.push(`${e.from} -> ${e.to} (${e.label})`));
+      cfgPanel.textContent = lines.join("\n");
+    }
+
+    function renderPathSlice(steps) {
+      const out = [];
+      const from = Math.max(0, currentStepIdx - 6);
+      const to = Math.min(steps.length - 1, currentStepIdx + 6);
+      for (let i = from; i < to; i++) {
+        const a = steps[i];
+        const b = steps[i + 1];
+        if (!a || !b || !a.line || !b.line) continue;
+        out.push(`${a.line} -> ${b.line}`);
+      }
+      pathPanel.textContent = out.length ? out.join("\n") : "Path unavailable.";
+    }
+
     function updateStepView(idx) {
       if (!currentResult) return;
       const steps = currentResult.steps;
@@ -575,13 +1237,56 @@
       stepSlider.value = String(step.idx);
       stepLabel.textContent = `step ${step.idx}/${steps.length}, line ${step.line || "-"}`;
       highlightLine(step.line);
+      flashElement(stepLabel);
 
       stackPanel.textContent = (step.stack && step.stack.length) ? step.stack.join(" -> ") : "(no stack info)";
       dsPanel.textContent = describeDataStructures(step);
+      renderPathSlice(steps);
+      flashElement(stackPanel, "panel-flash");
+      flashElement(pathPanel, "panel-flash");
+
+      const locals = step.locals || {};
+      const pointers = {};
+      ["i", "j", "k", "left", "right", "l", "r", "lo", "hi", "mid", "start", "end"].forEach((k) => {
+        if (locals[k] !== undefined) pointers[k] = Number(locals[k]);
+      });
+      let rendered = "";
+      for (const [k, v] of Object.entries(locals)) {
+        const arr = parseSimpleArray(v);
+        if (arr) {
+          rendered += `<div><b>${escapeHtml(k)}</b>${renderArrayBoxes(arr, pointers)}</div><br/>`;
+          if (k.toLowerCase().includes("heap")) {
+            rendered += `<div class='mono'>${escapeHtml(renderHeapTree(arr))}</div><br/>`;
+          }
+          break;
+        }
+      }
+      if (!rendered) {
+        for (const [k, v] of Object.entries(locals)) {
+          const obj = parseSimpleObject(v);
+          if (obj) {
+            rendered += `<div><b>${escapeHtml(k)}</b><div class='mono'>${escapeHtml(JSON.stringify(obj, null, 2))}</div></div>`;
+            if (Object.values(obj).some((x) => Array.isArray(x))) {
+              rendered += `<div class='mono' style='margin-top:6px;'>Graph-like adjacency detected in ${escapeHtml(k)}.</div>`;
+            }
+            break;
+          }
+        }
+      }
+      if (!rendered) rendered = "<span class='mono'>No array/map/tree/graph snapshot detected at this step.</span>";
+      dsPanel.innerHTML = rendered;
+      pointerPanel.innerHTML = renderLoopAnimator(steps, currentStepIdx);
+      flashElement(dsPanel, "panel-flash");
+      flashElement(pointerPanel, "panel-flash");
+      if (step.changed && Object.keys(step.changed).length) {
+        flashElement(varTimeline, "panel-flash");
+      }
 
       traceBody.querySelectorAll("tr").forEach((tr) => {
-        tr.style.background = tr.dataset.step === String(step.idx) ? "#fff7d4" : "transparent";
+        tr.classList.toggle("active-step", tr.dataset.step === String(step.idx));
       });
+      const activeRow = traceBody.querySelector(`tr[data-step="${step.idx}"]`);
+      if (activeRow) activeRow.scrollIntoView({ block: "nearest" });
     }
 
     function renderResult(result, sourceCode, argsText) {
@@ -592,29 +1297,49 @@
       loopsPill.textContent = `Loop Lines: ${summary.loop_lines.length ? summary.loop_lines.join(", ") : "None"}`;
       returnPill.textContent = `Return: ${return_value}`;
       stdoutBox.textContent = stdout || "<no output>";
+      flashElement(stepsPill);
+      flashElement(loopsPill);
+      flashElement(returnPill);
+      flashElement(stdoutBox, "panel-flash");
 
       renderCodeView(source_lines || sourceCode.split("\n"));
       renderTraceTable(steps);
       renderLoopHeatmap(steps, summary.loop_lines || []);
       renderBranchCoverage(steps, summary);
+      renderCFG(summary);
 
       varHistory = buildVarHistory(steps);
       renderVarSelector(varHistory);
 
       complexityPanel.textContent = estimateComplexity(steps, summary, sourceCode.split("\n"));
       bugPanel.textContent = detectBugs(result, sourceCode, argsText);
+      const hits = summary.watch_hits || [];
+      if (!hits.length) {
+        watchPanel.textContent = "No watch hits.";
+      } else {
+        watchPanel.textContent = hits.map((h, i) => `${i + 1}. line ${h.line} | ${h.expr}`).join("\n");
+      }
+      if (summary.stopped_by_watch) {
+        watchPanel.textContent += "\nExecution stopped due to watch hit.";
+      }
 
       stepSlider.min = "1";
       stepSlider.max = String(Math.max(1, steps.length));
       stepSlider.value = "1";
       updateStepView(0);
-      resultCard.hidden = false;
+      revealSection(resultCard);
     }
 
     async function runPrimary() {
       clearError();
       clearAllViews();
-      const payload = { code: codeEl.value, function_name: functionNameEl.value.trim(), args: argsEl.value.trim() };
+      const payload = {
+        code: codeEl.value,
+        function_name: functionNameEl.value.trim(),
+        args: argsEl.value.trim(),
+        watch_expr: watchExprEl.value.trim(),
+        stop_on_watch: stopOnWatchEl.checked,
+      };
       try {
         const data = await callVisualizer(payload);
         if (!data.ok) {
@@ -630,13 +1355,13 @@
     async function runTests() {
       clearError();
       testsBody.innerHTML = "";
-      testsCard.hidden = false;
 
       const lines = testArgsEl.value.split("\n").map((x) => x.trim()).filter(Boolean);
       if (!lines.length) {
         setError("Test Runner: add one JSON args array per line.");
         return;
       }
+      revealSection(testsCard);
 
       for (let i = 0; i < lines.length; i++) {
         const argsLine = lines[i];
@@ -662,6 +1387,7 @@
         tr.innerHTML = `<td>${i + 1}</td><td class='mono'>${escapeHtml(argsLine)}</td><td class='mono'>${status}</td><td>${steps}</td><td class='mono'>${escapeHtml(out)}</td>`;
         testsBody.appendChild(tr);
       }
+      flashElement(testsCard, "panel-flash");
     }
 
     async function runDiff() {
@@ -693,19 +1419,62 @@
         else lines.push("Both have similar trace step count on this input.");
 
         diffPanel.textContent = lines.join("\n");
+        flashElement(diffPanel, "panel-flash");
       } catch (err) {
         diffPanel.textContent = `Diff error: ${err.message}`;
+        flashElement(diffPanel, "panel-flash");
+      }
+    }
+
+    async function runProfile() {
+      clearError();
+      try {
+        const nValues = profileNEl.value.split(",").map((x) => Number(x.trim())).filter((x) => Number.isFinite(x) && x > 0);
+        if (!nValues.length) {
+          setError("Profiler: provide N values like 10,20,40.");
+          return;
+        }
+        revealSection(profileCard);
+        profilePanel.textContent = "Profiling...";
+        const payload = {
+          code: codeEl.value,
+          function_name: functionNameEl.value.trim(),
+          n_values: nValues,
+          args_expr: profileArgsExprEl.value.trim(),
+          watch_expr: watchExprEl.value.trim(),
+        };
+        const data = await callProfiler(payload);
+        if (!data.ok) {
+          setError(`${data.error?.type || "Error"}: ${data.error?.message || "Unknown"}`);
+          return;
+        }
+        const points = data.profile.points || [];
+        const maxSteps = Math.max(1, ...points.map((p) => p.steps));
+        const rows = [`growth hint: ${data.profile.growth_hint}`, ""];
+        for (const p of points) {
+          const bars = "#".repeat(Math.max(1, Math.round((p.steps / maxSteps) * 30)));
+          rows.push(`N=${p.n} steps=${p.steps} ${bars}`);
+        }
+        profilePanel.textContent = rows.join("\n");
+        flashElement(profilePanel, "panel-flash");
+      } catch (err) {
+        setError(`Profiler error: ${err.message}`);
       }
     }
 
     document.getElementById("runBtn").addEventListener("click", runPrimary);
     document.getElementById("runTestsBtn").addEventListener("click", runTests);
     document.getElementById("runDiffBtn").addEventListener("click", runDiff);
+    document.getElementById("runProfileBtn").addEventListener("click", runProfile);
 
     document.getElementById("sampleBtn").addEventListener("click", () => {
       functionNameEl.value = "twoSum";
       argsEl.value = "[[2,7,11,15], 9]";
       testArgsEl.value = "[[2,7,11,15], 9]\n[[3,2,4], 6]";
+      watchExprEl.value = "need in d";
+      stopOnWatchEl.checked = false;
+      profileNEl.value = "10,20,40,80";
+      profileArgsExprEl.value = "[list(range(N)), N-1]";
       codeEl.value = `class Solution:\n    def twoSum(self, nums: List[int], target: int) -> List[int]:\n        d = {}\n        for i, n in enumerate(nums):\n            need = target - n\n            if need in d:\n                return [d[need], i]\n            d[n] = i\n        return []`;
       codeBEl.value = `class Solution:\n    def twoSum(self, nums: List[int], target: int) -> List[int]:\n        for i in range(len(nums)):\n            for j in range(i+1, len(nums)):\n                if nums[i] + nums[j] == target:\n                    return [i, j]\n        return []`;
       functionNameBEl.value = "twoSum";
@@ -716,7 +1485,11 @@
       codeEl.value = "";
       functionNameEl.value = "";
       argsEl.value = "";
+      watchExprEl.value = "";
+      stopOnWatchEl.checked = false;
       testArgsEl.value = "";
+      profileNEl.value = "";
+      profileArgsExprEl.value = "";
       codeBEl.value = "";
       functionNameBEl.value = "";
       argsBEl.value = "";

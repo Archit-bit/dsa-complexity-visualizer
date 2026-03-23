@@ -13,6 +13,10 @@
       --accent: #0d7a5f;
       --accent-2: #e5f6f1;
       --border: #d8d1c4;
+      --shadow: 0 16px 34px rgba(0, 0, 0, 0.1);
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+      --dur-fast: 180ms;
+      --dur-med: 320ms;
     }
 
     * { box-sizing: border-box; }
@@ -24,6 +28,8 @@
       color: var(--ink);
       min-height: 100vh;
       padding: 24px;
+      background-size: 125% 125%;
+      animation: page-drift 18s ease-in-out infinite alternate;
     }
 
     .wrap {
@@ -34,6 +40,14 @@
       border-radius: 16px;
       padding: 22px;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+      animation: panel-enter 620ms var(--ease) both;
+      transition: transform var(--dur-med) var(--ease), box-shadow var(--dur-med) var(--ease), border-color var(--dur-med) ease;
+    }
+
+    .wrap:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+      border-color: #cfc6b6;
     }
 
     h1 {
@@ -59,6 +73,14 @@
       line-height: 1.45;
       background: #fffdfa;
       color: #151515;
+      transition: border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease, transform var(--dur-fast) var(--ease), background var(--dur-fast) ease;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #70a792;
+      box-shadow: 0 0 0 3px rgba(13, 122, 95, 0.12);
+      background: #ffffff;
     }
 
     .row {
@@ -76,6 +98,18 @@
       color: #fff;
       font-weight: 600;
       cursor: pointer;
+      transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) ease, filter var(--dur-fast) ease, background var(--dur-fast) ease;
+      box-shadow: 0 10px 18px rgba(13, 122, 95, 0.16);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: saturate(1.05);
+    }
+
+    button:active {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: 0 6px 12px rgba(13, 122, 95, 0.18);
     }
 
     button.secondary {
@@ -89,7 +123,9 @@
       border-radius: 12px;
       border: 1px solid #cdebe1;
       background: var(--accent-2);
+      transition: transform var(--dur-med) var(--ease), box-shadow var(--dur-med) ease, border-color var(--dur-fast) ease;
     }
+    .results.reveal { animation: panel-enter 420ms var(--ease) both; }
 
     .results h2 {
       margin: 0 0 8px;
@@ -99,7 +135,9 @@
     .metric {
       margin: 4px 0;
       font-weight: 600;
+      transition: transform var(--dur-fast) var(--ease), color var(--dur-fast) ease;
     }
+    .metric.flash { animation: metric-pop 360ms var(--ease); }
 
     ol {
       margin: 8px 0 0;
@@ -107,11 +145,56 @@
     }
 
     li { margin: 6px 0; }
+    li.stagger-item {
+      opacity: 0;
+      transform: translateY(8px);
+      animation: list-rise 360ms var(--ease) forwards;
+    }
+
+    @keyframes page-drift {
+      from { background-position: 0% 0%; }
+      to { background-position: 100% 100%; }
+    }
+
+    @keyframes panel-enter {
+      from {
+        opacity: 0;
+        transform: translateY(14px) scale(0.985);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes metric-pop {
+      0% { transform: scale(0.98); }
+      60% { transform: scale(1.02); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes list-rise {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
     @media (max-width: 640px) {
       body { padding: 14px; }
       .wrap { padding: 14px; }
       textarea { min-height: 220px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition-duration: 0ms !important;
+      }
     }
   </style>
 </head>
@@ -318,18 +401,37 @@
 
     function render(result) {
       const results = document.getElementById("results");
-      document.getElementById("time").textContent = `Estimated Time Complexity: ${result.time}`;
-      document.getElementById("space").textContent = `Estimated Space Complexity: ${result.space}`;
+      const timeEl = document.getElementById("time");
+      const spaceEl = document.getElementById("space");
+      timeEl.textContent = `Estimated Time Complexity: ${result.time}`;
+      spaceEl.textContent = `Estimated Space Complexity: ${result.space}`;
+      flashMetric(timeEl);
+      flashMetric(spaceEl);
 
       const list = document.getElementById("explanations");
       list.innerHTML = "";
-      result.explanations.forEach((line) => {
+      result.explanations.forEach((line, index) => {
         const li = document.createElement("li");
+        li.className = "stagger-item";
+        li.style.animationDelay = `${80 + index * 55}ms`;
         li.textContent = line;
         list.appendChild(li);
       });
 
+      revealResults(results);
+    }
+
+    function revealResults(results) {
       results.hidden = false;
+      results.classList.remove("reveal");
+      void results.offsetWidth;
+      results.classList.add("reveal");
+    }
+
+    function flashMetric(el) {
+      el.classList.remove("flash");
+      void el.offsetWidth;
+      el.classList.add("flash");
     }
 
     document.getElementById("analyzeBtn").addEventListener("click", () => {
@@ -343,7 +445,9 @@
 
     document.getElementById("clearBtn").addEventListener("click", () => {
       document.getElementById("code").value = "";
-      document.getElementById("results").hidden = true;
+      const results = document.getElementById("results");
+      results.hidden = true;
+      results.classList.remove("reveal");
     });
   </script>
 </body>
